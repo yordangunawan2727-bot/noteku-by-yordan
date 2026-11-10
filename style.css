@@ -123,3 +123,9 @@ h4{margin:14px 0 6px;font-size:.95rem}
 .ico{font-size:1.25rem;line-height:1}
 .brand{display:flex;align-items:center;gap:10px}
 .logo{width:36px;height:36px;flex:none}
+.edtop .etitle{flex:1;min-width:0;width:auto;margin:0;font-weight:600;font-size:1.05rem}
+.cwrap{position:relative;flex:none}
+.cbtn{width:40px;height:40px;border-radius:10px;border:2px solid var(--line);padding:0}
+.cpop{display:none;position:absolute;right:0;top:calc(100% + 8px);background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;gap:10px;z-index:5;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.cpop.open{display:flex}
+  
