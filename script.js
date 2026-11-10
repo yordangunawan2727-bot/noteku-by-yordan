@@ -81,29 +81,23 @@ function R(){
 function openSheet(h){$("m").classList.remove("full");$("sheet").innerHTML=h;$("m").classList.add("open");pushH();}
 function openFull(h){$("sheet").innerHTML=h;$("m").classList.add("open","full");pushH();if(ed)renderAudio();}
 function closeSheet(){$("m").classList.remove("open","full");ed=null;if(hist){hist=false;skipPop=true;setTimeout(function(){skipPop=false},600);try{history.back();}catch(e){skipPop=false;}}}
-function clRow(c){return '<div class="cli"><input type="checkbox"'+(c.done?" checked":"")+' aria-label="Selesai"><input type="text" value="'+esc(c.text)+'" placeholder="Tugas" aria-label="Tugas"><button data-a="rmcl" aria-label="Hapus tugas">×</button></div>';}
 function openEditor(id,date){
   var n=id?S.notes.filter(function(x){return x.id===id})[0]:null;
   var isNew=!n;
   n=n||{date:date||"",title:"",content:"",color:"ungu",category:S.cats.length?S.cats[0].id:"",favorite:false,checklist:[]};
-  ed={id:id,color:n.color,fav:n.favorite,isNew:isNew,audio:(n.audio||[]).slice()};armed=false;
-  openFull('<div class="edtop"><button class="back" data-a="back" aria-label="Selesai dan simpan">✓</button><span class="small">Tersimpan saat keluar</span><div class="g"><button class="ic" data-a="fav" id="ef" aria-label="Favorit">'+(n.favorite?"★":"☆")+'</button>'+(isNew?"":'<button class="ic" data-a="del" id="ed" aria-label="Hapus" style="color:var(--danger)">🗑️</button>')+'</div></div><input id="et" placeholder="Judul" value="'+esc(n.title)+'" aria-label="Judul">'+
+  ed={id:id,color:n.color,fav:n.favorite,date:n.date||"",checklist:(n.checklist||[]).slice(),isNew:isNew,audio:(n.audio||[]).slice()};armed=false;
+  openFull('<div class="edtop"><button class="back" data-a="back" aria-label="Selesai dan simpan">\u2713</button><input id="et" class="etitle" placeholder="Judul" value="'+esc(n.title)+'" aria-label="Judul"><div class="cwrap"><button class="cbtn" id="cb" data-a="cpick" style="background:var(--c-'+n.color+')" aria-label="Pilih warna"></button><div class="cpop" id="cp">'+COLORS.map(function(c){return '<button class="dot'+(c===n.color?" on":"")+'" data-a="color" data-c="'+c+'" style="background:var(--c-'+c+')" aria-label="Warna '+c+'"></button>'}).join("")+'</div></div>'+(isNew?"":'<button class="ic" data-a="del" id="ed" aria-label="Hapus" style="color:var(--danger)">\uD83D\uDDD1\uFE0F</button>')+'</div>'+
   '<select id="ec" aria-label="Kategori">'+S.cats.map(function(c){return '<option value="'+c.id+'"'+(c.id===n.category?" selected":"")+'>'+esc(c.name)+'</option>'}).join("")+'<option value=""'+(n.category===""?" selected":"")+'>Tanpa kategori</option></select>'+
-  '<label class="small" style="display:block;margin:0 0 4px">Tanggal (opsional)</label><input id="edt" type="date" value="'+esc(n.date||"")+'" aria-label="Tanggal">'+
-  '<div class="sw" id="sw">'+COLORS.map(function(c){return '<button class="dot'+(c===n.color?" on":"")+'" data-a="color" data-c="'+c+'" style="background:var(--c-'+c+')" aria-label="Warna '+c+'"></button>'}).join("")+'</div>'+
   '<textarea id="eb" placeholder="Tulis catatan di sini" aria-label="Isi catatan">'+esc(n.content)+'</textarea>'+
-  '<div id="cl">'+n.checklist.map(clRow).join("")+'</div><button class="btn ghost" data-a="addcl">+ Tugas</button> <button class="btn ghost" data-a="rec" id="rb">\uD83C\uDF99 Rekam suara</button><div id="au"></div>'+
-  ''); 
-  
+  '<button class="btn ghost" data-a="rec" id="rb">\uD83C\uDF99 Rekam suara</button><div id="au"></div>');
 }
 function saveNote(){
   var title=$("et").value.trim(),content=$("eb").value.trim();
-  var cl=[].slice.call(document.querySelectorAll("#cl .cli")).map(function(r){var i=r.querySelectorAll("input");return{id:uid(),text:i[1].value.trim(),done:i[0].checked}}).filter(function(c){return c.text});
   abortRec();
-  if(!title&&!content&&!cl.length&&!ed.audio.length){closeSheet();return;}
-  var now=Date.now(),cat=$("ec").value,dt=$("edt").value||"";
-  if(ed.id){var n=S.notes.filter(function(x){return x.id===ed.id})[0];if(n){n.title=title;n.content=content;n.category=cat;n.date=dt;n.audio=ed.audio;n.color=ed.color;n.favorite=ed.fav;n.checklist=cl;n.updatedAt=now;}}
-  else S.notes.unshift({id:uid(),date:dt,audio:ed.audio,title:title,content:content,color:ed.color,category:cat,favorite:ed.fav,checklist:cl,createdAt:now,updatedAt:now});
+  if(!title&&!content&&!ed.checklist.length&&!ed.audio.length){closeSheet();return;}
+  var now=Date.now(),cat=$("ec").value,dt=ed.date||"";
+  if(ed.id){var n=S.notes.filter(function(x){return x.id===ed.id})[0];if(n){n.title=title;n.content=content;n.category=cat;n.date=dt;n.audio=ed.audio;n.color=ed.color;n.favorite=ed.fav;n.checklist=ed.checklist;n.updatedAt=now;}}
+  else S.notes.unshift({id:uid(),date:dt,audio:ed.audio,title:title,content:content,color:ed.color,category:cat,favorite:ed.fav,checklist:ed.checklist,createdAt:now,updatedAt:now});
   save();closeSheet();R();
 }
 var MN=["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
@@ -170,7 +164,7 @@ function saveProf(){
 }
 function gmailBackup(data){
   var em=(S.profile&&S.profile.email)||"",b=encodeURIComponent(data),long=b.length>5000;
-  var url="https://mail.google.com/mail/?view=cm&fs=1&su=Backup%20NoteKu By Yordan"+(em?"&to="+encodeURIComponent(em):"")+(long?"":"&body="+b);
+  var url="https://mail.google.com/mail/?view=cm&fs=1&su=Backup%20NoteKu%20By%20Yordan"+(em?"&to="+encodeURIComponent(em):"")+(long?"":"&body="+b);
   return '<a class="btn ghost" style="display:block;text-align:center;text-decoration:none;margin-bottom:8px" href="'+url+'" target="_blank" rel="noopener">Kirim backup ke Gmail'+(em?" ("+esc(em)+")":"")+'</a>'+(long?'<p class="small">Data terlalu panjang untuk dikirim otomatis. Ketuk Salin teks dulu, lalu tempel di isi email.</p>':'');
 }
 function toggleSel(id){var i=sel.indexOf(id);if(i>-1)sel.splice(i,1);else{sel.push(id);try{if(navigator.vibrate)navigator.vibrate(60);}catch(x){}}armed=false;chrome();renderList();}
@@ -194,7 +188,7 @@ function copyText(txt,done){
 function selCopy(){var n=sel.length;copyText(selText(),function(ok){toast(ok?n+" catatan disalin":"Gagal menyalin");if(ok){sel=[];chrome();renderList();}});}
 function shareLinks(txt){
   var e=encodeURIComponent(txt),s=function(h,i,l){return '<a class="shb" href="'+h+'" target="_blank" rel="noopener"><i>'+i+'</i>'+l+'</a>'};
-  return '<div class="shg">'+s("https://wa.me/?text="+e,"💬","WhatsApp")+s("https://t.me/share/url?url=%20&text="+e,"✈️","Telegram")+s("https://mail.google.com/mail/?view=cm&fs=1&su=Catatan%20NoteKu By Yordan&body="+e,"✉️","Gmail")+'<button class="shb" data-a="sms"><i>📱</i>SMS</button>'+'<button class="shb" data-a="sysshare"><i>🔗</i>Lainnya</button></div>';
+  return '<div class="shg">'+s("https://wa.me/?text="+e,"💬","WhatsApp")+s("https://t.me/share/url?url=%20&text="+e,"✈️","Telegram")+s("https://mail.google.com/mail/?view=cm&fs=1&su=Catatan%20NoteKu%20By%20Yordan&body="+e,"✉️","Gmail")+'<button class="shb" data-a="sms"><i>📱</i>SMS</button>'+'<button class="shb" data-a="sysshare"><i>🔗</i>Lainnya</button></div>';
 }
 function smsShare(){
   if(navigator.share){$("bkm").textContent="Pilih aplikasi Pesan di menu yang terbuka.";sysShare();return;}
@@ -261,6 +255,7 @@ function doImport(){
 }
 
 document.addEventListener("click",function(e){
+  if(!(e.target.closest&&e.target.closest(".cwrap"))){var cp0=$("cp");if(cp0)cp0.classList.remove("open");}
   var v=e.target.closest("[data-v]");
   if(v){view=v.getAttribute("data-v");q="";armed=false;R();return;}
   if(e.target===$("m")){closeSheet();return;}
@@ -311,11 +306,9 @@ document.addEventListener("click",function(e){
   else if(a==="chip"){cf=t.getAttribute("data-c");R();}
   else if(a==="close")closeSheet();
   else if(a==="save"||a==="back")saveNote();
-  else if(a==="color"){ed.color=t.getAttribute("data-c");document.querySelectorAll("#sw .dot").forEach(function(d){d.classList.toggle("on",d===t)});}
-  else if(a==="fav"){ed.fav=!ed.fav;t.textContent=ed.fav?"★":"☆";}
-  else if(a==="addcl"){$("cl").insertAdjacentHTML("beforeend",clRow({text:"",done:false}));var r=$("cl").querySelectorAll('input[type=text]');r[r.length-1].focus();}
-  else if(a==="rmcl")t.closest(".cli").remove();
-  else if(a==="del"){if(!armed){armed=true;t.textContent="Ketuk lagi";return;}S.notes=S.notes.filter(function(x){return x.id!==ed.id});save();closeSheet();armed=false;R();}
+  else if(a==="cpick"){$("cp").classList.toggle("open");}
+  else if(a==="color"){ed.color=t.getAttribute("data-c");$("cb").style.background="var(--c-"+ed.color+")";document.querySelectorAll("#cp .dot").forEach(function(d){d.classList.toggle("on",d===t)});$("cp").classList.remove("open");}
+  else if(a==="del"){if(!armed){armed=true;t.textContent="Yakin?";return;}S.notes=S.notes.filter(function(x){return x.id!==ed.id});save();closeSheet();armed=false;R();}
   
   else if(a==="addcat"){var nm=$("nc").value.trim();if(nm){S.cats.push({id:uid(),name:nm});save();R();}}
   else if(a==="delcat"){S.cats=S.cats.filter(function(c){return c.id!==id});var f=S.cats.length?S.cats[0].id:"";S.notes.forEach(function(n){if(n.category===id)n.category=f});if(cf===id)cf="Semua";save();R();}
