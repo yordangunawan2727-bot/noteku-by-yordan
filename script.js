@@ -1,6 +1,5 @@
 (function(){
 var KEY="noteku:web:v1";
-var GCLIENT=String(window.NOTEKU_GOOGLE_CLIENT_ID||"").trim(),GSCOPE="openid email profile https://www.googleapis.com/auth/drive.appdata",gtok="",gexp=0;
 var COLORS=["ungu","biru","hijau","oranye","merah","abu"];
 var $=function(i){return document.getElementById(i)};
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
@@ -28,7 +27,7 @@ function renderList(){
   var l=$("list");if(!l)return;
   var s=q.trim().toLowerCase();
   var items=S.notes.filter(function(n){
-    if(view==="kalender")return nd(n)===calSel;
+    if(view==="kalender")return n.date===calSel;
     if(view==="favorit"&&!n.favorite)return false;
     if(cf==="__fav"){if(!n.favorite)return false;}else if(cf!=="Semua"&&n.category!==cf)return false;
     if(!s)return true;
@@ -53,13 +52,13 @@ function vNotes(){
 }
 function vCats(){
   return '<div class="row" style="margin-top:0"><input class="search" id="nc" placeholder="Nama kategori baru" style="flex:1;margin:0" aria-label="Nama kategori baru"><button class="btn" data-a="addcat">Tambah</button></div><h4>Kategori kamu</h4><div class="list"><div class="it"><span data-a="gofav" style="flex:1;cursor:pointer">★ Favorit <span class="small">('+S.notes.filter(function(n){return n.favorite}).length+' catatan)</span></span></div>'+
-  S.cats.map(function(c){var n=S.notes.filter(function(x){return x.category===c.id}).length;return '<div class="it"><span data-a="gocat" data-id="'+c.id+'" style="flex:1;cursor:pointer">'+esc(c.name)+' <span class="small">('+n+' catatan)</span></span><span style="display:flex;gap:14px"><button data-a="rencat" data-id="'+c.id+'" style="color:var(--accent)">Ubah</button><button data-a="delcat" data-id="'+c.id+'">Hapus</button></span></div>'}).join("")+'</div>';
+  S.cats.map(function(c){var n=S.notes.filter(function(x){return x.category===c.id}).length;return '<div class="it"><span data-a="gocat" data-id="'+c.id+'" style="flex:1;cursor:pointer">'+esc(c.name)+' <span class="small">('+n+' catatan)</span></span><button data-a="delcat" data-id="'+c.id+'">Hapus</button></div>'}).join("")+'</div>';
 }
 function vSet(){
-  var tasks=S.tasks.length+S.notes.reduce(function(a,n){return a+n.checklist.length},0),favs=S.notes.filter(function(n){return n.favorite}).length;
+  var tasks=S.notes.reduce(function(a,n){return a+n.checklist.length},0),favs=S.notes.filter(function(n){return n.favorite}).length;
   return profileCard()+'<div class="stats"><div><b>'+S.notes.length+'</b>Catatan</div><div><b>'+favs+'</b>Favorit</div><div><b>'+S.cats.length+'</b>Kategori</div><div><b>'+tasks+'</b>Tugas</div></div>'+
   '<h4>Tampilan</h4><div class="themes">'+[["light","Terang"],["dark","Gelap"],["system","Sistem"]].map(function(t){return '<button data-a="theme" data-t="'+t[0]+'" class="'+(S.theme===t[0]?"on":"")+'">'+t[1]+'</button>'}).join("")+'</div>'+
-  (dip?'<h4>Aplikasi</h4><button class="btn block" data-a="install">Pasang NoteKu By Yordan di layar utama</button>':'')+'<h4>Warna aksen</h4>'+accHtml()+'<h4>Font</h4>'+fontHtml()+'<h4>Keamanan</h4>'+pinHtml()+'<h4>Data</h4><p class="small">Catatan tersimpan di browser perangkat ini. Menghapus data browser akan menghapus catatan, jadi simpan backup secara berkala. Sinkron antar perangkat segera hadir.</p><div class="row" style="margin:0 0 10px"><button class="btn ghost" style="flex:1" data-a="exp">Salin backup</button><button class="btn ghost" style="flex:1" data-a="imp">Pulihkan</button></div>'+gHtml()+'<button class="btn danger block" data-a="reset">'+(armed?"Ketuk lagi untuk hapus semua":"Hapus semua data")+'</button>';
+  (dip?'<h4>Aplikasi</h4><button class="btn block" data-a="install">Pasang NoteKu By Yordan di layar utama</button>':'')+'<h4>Warna aksen</h4>'+accHtml()+'<h4>Font</h4>'+fontHtml()+'<h4>Keamanan</h4>'+pinHtml()+'<h4>Data</h4><p class="small">Catatan tersimpan di browser perangkat ini. Menghapus data browser akan menghapus catatan, jadi simpan backup secara berkala. Sinkron antar perangkat segera hadir.</p><div class="row" style="margin:0 0 10px"><button class="btn ghost" style="flex:1" data-a="exp">Salin backup</button><button class="btn ghost" style="flex:1" data-a="imp">Pulihkan</button></div><button class="btn danger block" data-a="reset">'+(armed?"Ketuk lagi untuk hapus semua":"Hapus semua data")+'</button>';
 }
 function chrome(){
   sel=sel.filter(function(id){return S.notes.some(function(n){return n.id===id})});
@@ -87,9 +86,8 @@ function openEditor(id,date){
   var isNew=!n;
   n=n||{date:date||"",title:"",content:"",color:"ungu",category:S.cats.length?S.cats[0].id:"",favorite:false,checklist:[]};
   ed={id:id,color:n.color,fav:n.favorite,date:n.date||"",checklist:(n.checklist||[]).slice(),isNew:isNew,audio:(n.audio||[]).slice()};armed=false;
-  openFull('<div class="edtop"><button class="back" data-a="back" aria-label="Selesai dan simpan">\u2713<span style="font-size:.8rem;font-weight:600"> Simpan</span></button><input id="et" class="etitle" placeholder="Judul" value="'+esc(n.title)+'" aria-label="Judul"><div class="cwrap"><button class="cbtn" id="cb" data-a="cpick" style="background:var(--c-'+n.color+')" aria-label="Pilih warna"></button><div class="cpop" id="cp">'+COLORS.map(function(c){return '<button class="dot'+(c===n.color?" on":"")+'" data-a="color" data-c="'+c+'" style="background:var(--c-'+c+')" aria-label="Warna '+c+'"></button>'}).join("")+'</div></div><button class="ic" data-a="edfav" id="efv" aria-label="Favorit">'+(n.favorite?"★":"☆")+'</button>'+(isNew?"":'<button class="ic" data-a="del" id="ed" aria-label="Hapus" style="color:var(--danger)">\uD83D\uDDD1\uFE0F</button>')+'</div>'+
+  openFull('<div class="edtop"><button class="back" data-a="back" aria-label="Selesai dan simpan">\u2713</button><input id="et" class="etitle" placeholder="Judul" value="'+esc(n.title)+'" aria-label="Judul"><div class="cwrap"><button class="cbtn" id="cb" data-a="cpick" style="background:var(--c-'+n.color+')" aria-label="Pilih warna"></button><div class="cpop" id="cp">'+COLORS.map(function(c){return '<button class="dot'+(c===n.color?" on":"")+'" data-a="color" data-c="'+c+'" style="background:var(--c-'+c+')" aria-label="Warna '+c+'"></button>'}).join("")+'</div></div>'+(isNew?"":'<button class="ic" data-a="del" id="ed" aria-label="Hapus" style="color:var(--danger)">\uD83D\uDDD1\uFE0F</button>')+'</div>'+
   '<select id="ec" aria-label="Kategori">'+S.cats.map(function(c){return '<option value="'+c.id+'"'+(c.id===n.category?" selected":"")+'>'+esc(c.name)+'</option>'}).join("")+'<option value=""'+(n.category===""?" selected":"")+'>Tanpa kategori</option></select>'+
-  '<label class="small" for="edt" style="display:block;margin-bottom:4px">Tanggal di kalender</label><input id="edt" type="date" value="'+esc(n.date||"")+'">'+
   '<textarea id="eb" placeholder="Tulis catatan di sini" aria-label="Isi catatan">'+esc(n.content)+'</textarea>'+
   '<button class="btn ghost" data-a="rec" id="rb">\uD83C\uDF99 Rekam suara</button><div id="au"></div>');
 }
@@ -97,7 +95,7 @@ function saveNote(){
   var title=$("et").value.trim(),content=$("eb").value.trim();
   abortRec();
   if(!title&&!content&&!ed.checklist.length&&!ed.audio.length){closeSheet();return;}
-  var now=Date.now(),cat=$("ec").value,dt=($("edt")&&$("edt").value)||"";
+  var now=Date.now(),cat=$("ec").value,dt=ed.date||"";
   if(ed.id){var n=S.notes.filter(function(x){return x.id===ed.id})[0];if(n){n.title=title;n.content=content;n.category=cat;n.date=dt;n.audio=ed.audio;n.color=ed.color;n.favorite=ed.fav;n.checklist=ed.checklist;n.updatedAt=now;}}
   else S.notes.unshift({id:uid(),date:dt,audio:ed.audio,title:title,content:content,color:ed.color,category:cat,favorite:ed.fav,checklist:ed.checklist,createdAt:now,updatedAt:now});
   save();closeSheet();R();
@@ -105,11 +103,10 @@ function saveNote(){
 var MN=["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
 function ds(y,m,d){return y+"-"+(m+1<10?"0":"")+(m+1)+"-"+(d<10?"0":"")+d;}
 function todayStr(){var d=new Date();return ds(d.getFullYear(),d.getMonth(),d.getDate());}
-function nd(n){if(n.date)return n.date;if(!n.createdAt)return"";var d=new Date(n.createdAt);return ds(d.getFullYear(),d.getMonth(),d.getDate());}
 var calY=new Date().getFullYear(),calM=new Date().getMonth(),calSel=todayStr();
 function vCal(){
   var start=new Date(calY,calM,1).getDay(),today=todayStr(),by={};
-  S.notes.forEach(function(n){var k=nd(n);if(k){by[k]=(by[k]||0)+1;}});
+  S.notes.forEach(function(n){if(n.date){by[n.date]=(by[n.date]||0)+1;}});
   S.tasks.forEach(function(t){if(!t.done)by[t.date]=(by[t.date]||0)+1;});
   var h='<div class="calh"><button data-a="calprev" aria-label="Bulan sebelumnya">◀</button><b>'+MN[calM]+' '+calY+'</b><button data-a="calnext" aria-label="Bulan berikutnya">▶</button></div><div class="calg">';
   ["MIN","SEN","SEL","RAB","KAM","JUM","SAB"].forEach(function(d,i){h+='<div class="dow'+(i===0?" sun":i===6?" sat":"")+'">'+d+'</div>';});
@@ -125,9 +122,9 @@ var ICONS=["🎂","🎉","🎁","❤️","⭐","✈️","🏖️","🎄","🕌",
 function dayPanel(){
   var ic=S.dayIcons[calSel],ts=S.tasks.filter(function(t){return t.date===calSel});
   return '<div class="box"><div class="row" style="margin:0 0 10px"><span>'+(ic?'<span style="font-size:1.6rem">'+esc(ic.e)+'</span> <b>'+esc(ic.t||"")+'</b>':'<span class="small">Belum ada ikon untuk tanggal ini</span>')+'</span><button class="btn ghost" data-a="dayicon">'+(ic?"Ubah ikon":"+ Ikon")+'</button></div>'+
-  '<b>Tugas</b>'+
+  '<b>Daftar centang</b>'+
   ts.map(function(t){return '<div class="cli"><input type="checkbox" data-a="tkdone" data-id="'+t.id+'"'+(t.done?" checked":"")+' aria-label="Selesai"><span style="flex:1;'+(t.done?'text-decoration:line-through;color:var(--muted)':'')+'">'+esc(t.text)+'</span><button data-a="tkdel" data-id="'+t.id+'" aria-label="Hapus item">×</button></div>'}).join("")+
-  '<div style="display:flex;gap:8px;margin-top:8px"><input class="search" id="tkn" placeholder="Tambah tugas" aria-label="Tugas baru" style="margin:0;flex:1;min-width:0"><button class="btn" data-a="tkadd">Tambah</button></div></div>';
+  '<div style="display:flex;gap:8px;margin-top:8px"><input class="search" id="tkn" placeholder="Buat item daftar centang" aria-label="Item baru" style="margin:0;flex:1;min-width:0"><button class="btn" data-a="tkadd">Tambah</button></div></div>';
 }
 function addTask(){var v=$("tkn").value.trim();if(!v)return;S.tasks.push({id:uid(),date:calSel,text:v,done:false});save();R();var x=$("tkn");if(x)x.focus();}
 function openIcon(){
@@ -141,11 +138,11 @@ function avatar(sz,photo){
 }
 function profileCard(){
   var p=S.profile||{};
-  return '<button class="box prof" data-a="prof" aria-label="Buka profil">'+avatar(56,p.photo)+'<div><b>'+esc(p.name||"Atur profil")+'</b><br><span class="small">'+esc(p.email||"Tambahkan email untuk backup")+'</span></div></button>';
+  return '<button class="box prof" data-a="prof" aria-label="Buka profil">'+avatar(56,p.photo)+'<div><b>'+esc(p.name||"Atur profil")+'</b><br><span class="small">'+esc(p.email||"Tambahkan alamat Gmail")+'</span></div></button>';
 }
 function openProfile(){
   var p=S.profile||{};tmpPhoto=null;
-  openSheet('<h2>Profil</h2><div style="display:flex;align-items:center;gap:14px;margin-bottom:12px"><span id="pav">'+avatar(72,p.photo)+'</span><span class="btn ghost" style="position:relative;overflow:hidden;cursor:pointer">Pilih foto<input id="pf" type="file" accept="image/*" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;margin:0;padding:0;border:0"></span></div><input id="pn" placeholder="Nama" value="'+esc(p.name||"")+'" aria-label="Nama"><input id="pe" type="email" placeholder="Email untuk backup" value="'+esc(p.email||"")+'" aria-label="Email untuk backup"><p class="small">Profil hanya tersimpan di perangkat ini. '+(S.g?"Akun Google terhubung: "+esc(S.g.email)+". ":"Email belum diverifikasi karena belum ada login Google. ")+'Email ini hanya dipakai sebagai tujuan saat kamu mengirim backup lewat Gmail.</p><div class="row"><button class="btn ghost" data-a="close">Batal</button><div class="g">'+(p.photo?'<button class="btn danger" data-a="delphoto">Hapus foto</button>':'')+'<button class="btn" data-a="saveprof">Simpan</button></div></div>');
+  openSheet('<h2>Profil</h2><div style="display:flex;align-items:center;gap:14px;margin-bottom:12px"><span id="pav">'+avatar(72,p.photo)+'</span><span class="btn ghost" style="position:relative;overflow:hidden;cursor:pointer">Pilih foto<input id="pf" type="file" accept="image/*" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;margin:0;padding:0;border:0"></span></div><input id="pn" placeholder="Nama" value="'+esc(p.name||"")+'" aria-label="Nama"><input id="pe" type="email" placeholder="Alamat Gmail" value="'+esc(p.email||"")+'" aria-label="Alamat Gmail"><p class="small">Profil hanya tersimpan di perangkat ini. Alamat Gmail belum diverifikasi karena belum ada login Google. Alamat ini dipakai sebagai tujuan saat lu mengirim backup ke Gmail.</p><div class="row"><button class="btn ghost" data-a="close">Batal</button><div class="g"><button class="btn danger" data-a="delphoto">Hapus foto</button><button class="btn" data-a="saveprof">Simpan</button></div></div>');
 }
 function pickPhoto(f){
   if(!f)return;
@@ -191,4 +188,18 @@ function copyText(txt,done){
 function selCopy(){var n=sel.length;copyText(selText(),function(ok){toast(ok?n+" catatan disalin":"Gagal menyalin");if(ok){sel=[];chrome();renderList();}});}
 function shareLinks(txt){
   var e=encodeURIComponent(txt),s=function(h,i,l){return '<a class="shb" href="'+h+'" target="_blank" rel="noopener"><i>'+i+'</i>'+l+'</a>'};
-  return '<div class="shg">'+s("https://wa.me/?text="+e,"💬","WhatsApp")+s("https://t.me/share/url?url=%20&text="+e,"✈️","Telegram")+s("https://mail.google.com/mail/?view=cm&fs=1&su=Catatan%20NoteKu%20By%20Yordan&body="+e,"✉️","Gmail")+'<button class="shb" data-a="sms"><i>📱</i>SMS</button>'+'<button class="shb
+  return '<div class="shg">'+s("https://wa.me/?text="+e,"💬","WhatsApp")+s("https://t.me/share/url?url=%20&text="+e,"✈️","Telegram")+s("https://mail.google.com/mail/?view=cm&fs=1&su=Catatan%20NoteKu%20By%20Yordan&body="+e,"✉️","Gmail")+'<button class="shb" data-a="sms"><i>📱</i>SMS</button>'+'<button class="shb" data-a="sysshare"><i>🔗</i>Lainnya</button></div>';
+}
+function smsShare(){
+  if(navigator.share){$("bkm").textContent="Pilih aplikasi Pesan di menu yang terbuka.";sysShare();return;}
+  var txt=$("bk").value,m=$("bkm"),went=false,on=function(){went=true};
+  window.addEventListener("blur",on,{once:true});
+  document.addEventListener("visibilitychange",on,{once:true});
+  var f=document.createElement("iframe");f.style.display="none";f.src="sms:?body="+encodeURIComponent(txt);document.body.appendChild(f);
+  setTimeout(function(){
+    if(f.parentNode)f.parentNode.removeChild(f);
+    if(!went){m.textContent="SMS tidak bisa dibuka langsung dari halaman ini. Gunakan menu bagikan HP dan pilih aplikasi Pesan.";sysShare();}
+  },1000);
+}
+function sysShare(){
+  var txt=$("bk").value,m=$("bkm"),fail="Menu bagikan HP tidak bisa dibuka di sini. Salin teks lalu kirim
