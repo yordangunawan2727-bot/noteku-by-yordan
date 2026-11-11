@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>NoteKu By Yordan</title>
+<title>NoteKu</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -16,22 +16,19 @@
 <body>
 <header class="top"><div class="brand"><img class="logo" src="icons/icon-192.png" alt="Logo NoteKu" width="36" height="36"><h1 id="ttl">Catatan</h1></div><button class="badge" id="badge" data-a="selclear" aria-label="Batal pilih"></button></header>
 <main id="main"></main>
-<noscript><p style="padding:24px;text-align:center">NoteKu By Yordan butuh JavaScript. Aktifkan JavaScript di browser, lalu muat ulang halaman.</p></noscript>
 <nav class="nav" id="nav">
   <button data-v="catatan">Catatan</button>
   <button data-v="kategori">Kategori</button>
   <button class="fab" data-a="fab" aria-label="Tambah catatan">+</button>
   <button data-v="kalender">Kalender</button>
-  <button data-v="pengaturan" aria-label="Pengaturan" style="font-size:1.5rem">⚙</button>
+  <button data-v="pengaturan" aria-label="Menu pengaturan" style="font-size:1.5rem">☰</button>
 </nav>
 <div class="nav" id="selbar" style="display:none"></div>
 <div id="toast"></div>
 <div id="lock"></div>
 <div class="modal" id="m"><div class="sheet" id="sheet"></div></div>
 
-<script src="config.js"></script>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="script.js"></script>
 </body>
-                                      </html>
+                  </html>
   
