@@ -1,5 +1,5 @@
 // Ganti angka versi ini setiap kali kamu memperbarui file aplikasi.
-var CACHE="noteku-v5";
+var CACHE="noteku-v3";
 var ASSETS=["./","index.html","style.css","script.js","manifest.webmanifest","icons/icon-192.png","icons/icon-512.png"];
 self.addEventListener("install",function(e){
   e.waitUntil(caches.open(CACHE).then(function(c){return c.addAll(ASSETS);}).then(function(){return self.skipWaiting();}));
@@ -17,3 +17,4 @@ self.addEventListener("fetch",function(e){
     });
   }));
 });
+                                      
